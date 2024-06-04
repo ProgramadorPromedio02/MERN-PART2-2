@@ -21,7 +21,7 @@
 
 * Si ya has instalado Node.js en tu sistema, puedes ejecutar el comando `npm run dev` directamente desde la carpeta `front-end`.
 
-**¡Eso es todo!** El servidor debería estar ejecutándose ahora y puedes acceder a la aplicación en [https://locall.host:3000/](https://locall.host:3000/).
+**¡Eso es todo!** El servidor debería estar ejecutándose ahora y puedes acceder a la aplicación en [https://locall.host:4000/](https://locall.host:4000/).
 
 **Consejos:**
 
