@@ -1,68 +1,134 @@
-import React, { Component } from 'react';
+import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import React, { Component } from 'react';
+import ReactDatePicker from 'react-datepicker';
 
-export default class NotesList extends Component {
+export default class CreatedNote extends Component {
   state = {
-    notes: [],
+    author: '',
+    content: '',
+    date: null,
+    title: '',
+    availableUsers: [],
   };
 
+  // ejecutar cuando se monte el componente
   componentDidMount() {
-    this.getNotes();
-  }
+    this.getUsers();
+  };
 
-  async getNotes() {
+  // funcion para obtener los usuarios existentes de la BD
+  async getUsers() {
     try {
-      const res = await axios.get('http://localhost:4000/api/notes');
-      this.setState({ notes: res.data });
+      const res = await axios.get('http://localhost:4000/api/users');
+      this.setState({ availableUsers: res.data });
+      console.log(this.props)
     } catch (error) {
       console.error('Error fetching notes:', error);
     }
-  }
+  };
 
-  deleteNote = async (id) => {
+  // funcion para modificar el estado al llenar los inputs del form que tengan el atributo [name]
+  onInputChange = (e) => {
+    this.setState({ [e.target.name]: e.target.value })
+  };
+
+  // funcion para modificar el estado al escoger una fecha en el componente <ReactDatePicker />
+  onChangeDate = (date) => this.setState({ date });
+
+  // funcion para crear una nota al hacer submit
+  onSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.delete(`http://localhost:4000/api/notes/${id}`);
-      this.getNotes(); // Llama a getNotes después de borrar para actualizar la lista
+      if (this.state.date && this.state.author.trim() !== '') {
+        await axios.post('http://localhost:4000/api/notes', {
+          author: this.state.author,
+          content: this.state.content,
+          date: this.state.date,
+          title: this.state.title,
+        });
+        this.setState({
+          author: '',
+          content: '',
+          date: null,
+          title: '',
+        });
+      }
     } catch (error) {
-      console.error('Error deleting note:', error);
+      console.error('Error:', error.message);
     }
   };
 
   render() {
     return (
-      <div className="row">
-        {this.state.notes.map((note) => (
-          <div key={note._id} className="col-md-4 p-2">
-            <div className="card">
-              <div className="card-header d-flex justify-content-between">
-                <h5>{note.title}</h5>
-                <Link className="btn btn-secondary" to={`/edit/${note._id}`}>
-                  Edit
-                </Link>
-              </div>
-              <div className="card-body">
-                <p>{note.content}</p>
-                <p>{note.author}</p>
-                <p>
-                  Hace{' '}
-                  {formatDistanceToNow(new Date(note.createdAt), {
-                    locale: es,
-                  })}
-                </p>
-              </div>
-              <div className="card-footer">
-                <button
-                  className="btn btn-danger"
-                  onClick={() => this.deleteNote(note._id)}>
-                  Delete
-                </button>
-              </div>
+      <div className="col-md-6 offset-md-3">
+        <div className="card card-body">
+          <h4>Create a Note</h4>
+          <form onSubmit={this.onSubmit}>
+
+            {/* Note Title */}
+            <div className="mb-3">
+              <input
+                autoFocus
+                className="form-control"
+                name="title"
+                onChange={this.onInputChange}
+                placeholder="Title"
+                type="text"
+                value={this.state.title}
+                required
+              />
             </div>
-          </div>
-        ))}
+
+            {/* Note Content */}
+            <div className="mb-3">
+              <textarea
+                className="form-control"
+                name="content"
+                onChange={this.onInputChange}
+                placeholder="Content"
+                type="text"
+                value={this.state.content}
+                required
+              ></textarea>
+            </div>
+
+            {/* Note Date */}
+            <div className="form-group mb-3">
+              <ReactDatePicker
+                className="form-control"
+                name="date"
+                onChange={this.onChangeDate}
+                placeholderText="Select a date"
+                selected={this.state.date}
+              />
+            </div>
+
+            {/* Note Author */}
+            <div className="mb-3">
+              {
+                // si no existen usuarios en la BD no muestra el select
+                this.state.availableUsers.length === 0
+                  ? <p>&#x274C; No available users.</p>
+                  : (
+                    <select
+                      className="form-control"
+                      name="author"
+                      onChange={this.onInputChange}
+                      value={this.state.author}
+                    >
+                      <option value="">Select a user</option>
+                      {this.state.availableUsers.map((user) => <option key={user._id} value={user.username}>{user.username}</option>)}
+                    </select>
+                  )
+              }
+            </div>
+
+            <button className="btn btn-primary w-100">
+              Save &#x271A;
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
